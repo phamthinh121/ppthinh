@@ -24,7 +24,9 @@ router.post('/users',async (req,res)=>{
 })
 
 
-
+router.post('/check-token', auth, (req, res) => {
+    res.status(200).send();
+})
 
 
 router.get('/users/me', auth, async (req, res) => {

@@ -1,29 +1,23 @@
 const express = require('express');
+const path = require('path');
 require('./db/mongoose');
-
+const bodyParser = require('body-parser');
 const User = require('./models/user')
 const Task = require('./models/task')
 const userRouter = require('./routers/user')
 const taskRouter = require('./routers/task')
+const {sendWelcomeEmail,sendGoodbyeEmail} = require ('./emails/account')
  
 const multer = require ('multer')
 
 const app = express()
 const port = process.env.PORT
 
-// app.use((req,res,next)=>{
-//     if(req.method === 'GET'){
-//         res.send('GET methods are disable')
-//     }else{
-//         next()
-//     }
-// })
+app.set('view engine', 'ejs');
+app.set('views', 'views');
 
-// app.use((req,res,next)=>{
-    
-//         res.status(503).send('site is currently down,check back soon')
-    
-// })
+app.use(express.static(path.join(__dirname, '../public')));
+
 const upload = multer({
     dest:'images',
     limits:{
@@ -36,19 +30,50 @@ const upload = multer({
         cb(undefined,true)
     }
 })
+
+// app.use(express.json())
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false}));
+
 app.post('/upload',upload.single('upload1'),(req,res)=>{
     res.send()
 })
 
+app.get('/create', (req, res) => {
+    res.render('create')
+})
 
-app.use(express.json())
+app.post('/create',async (req,res)=>{
+  const user = new User (req.body)
+    try{
+        await user.save()
+        sendWelcomeEmail(user.email,user.name)
+        const token = await user.generateAuthToken()
+       res.redirect('/login');
+    }catch(e) {
+        res.status(500).send(e)
+    }
+})
+app.get('/login', (req, res) => {
+    res.render('login')
+})
+app.post('/login',async (req,res)=>{
+    try{
+        console.log(req.body)
+        const user = await User.findByCredentials(req.body.email,req.body.password)
+        const token = await user.generateAuthToken() 
+        res.status(200).json({token: token});
+    }catch(e){
+         res.status(404).send({message: "Email and password wrong"})
+    }
+ })
 
 app.use(userRouter)
 app.use(taskRouter)
 
-
-
-
+app.get('/',(req,res)=>{
+    res.render('index')
+})
 
 // app.patch('/users/:id',async(req,res)=>{
 //     const updates= Object.keys(req.body)
