@@ -1,14 +1,10 @@
 const mongoose = require('mongoose');
 // const validator = require('validator');
 
-mongoose.connect(process.env.MONGODB_URL,{
+mongoose.connect('mongodb+srv://myapp:phamthinh121@cluster0-vmxuh.mongodb.net/task-manager-api?retryWrites=true',{
     useNewUrlParser:true,
     useFindAndModify: false,
     useCreateIndex:true
-    
-    
-
-  
 })
 
 // const User = mongoose.model('User',{
